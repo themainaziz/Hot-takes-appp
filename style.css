@@ -1,11 +1,12 @@
 body {
   margin: 0;
-  background: #0b0b0b;
-  color: white;
   font-family: Arial, sans-serif;
+  background: linear-gradient(180deg, #0f0f0f, #000);
+  color: white;
   overflow: hidden;
 }
 
+/* app layout */
 .app {
   height: 100vh;
   display: flex;
@@ -13,6 +14,7 @@ body {
   justify-content: center;
 }
 
+/* top bar */
 .top-bar {
   position: absolute;
   top: 20px;
@@ -21,22 +23,41 @@ body {
   justify-content: space-between;
   padding: 0 20px;
   font-size: 14px;
+  opacity: 0.8;
 }
 
+/* card */
 .card {
-  background: #161616;
   margin: 0 20px;
   padding: 30px;
   border-radius: 25px;
   text-align: center;
+
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+
+  box-shadow: 
+    0 10px 30px rgba(0,0,0,0.5),
+    inset 0 0 10px rgba(255,255,255,0.05);
+
   transition: all 0.25s ease;
 }
 
-h1 {
-  font-size: 26px;
-  margin: 20px 0;
+/* category */
+#category {
+  color: #aaa;
+  letter-spacing: 2px;
+  font-size: 12px;
 }
 
+/* main text */
+#take {
+  font-size: 26px;
+  margin: 20px 0;
+  line-height: 1.4;
+}
+
+/* bar */
 .bar {
   height: 10px;
   background: #222;
@@ -48,13 +69,21 @@ h1 {
 #agreeBar {
   height: 100%;
   width: 50%;
-  background: #22c55e;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
   transition: width 0.3s ease;
 }
 
+/* percent text */
+#percent {
+  opacity: 0.8;
+  font-size: 14px;
+}
+
+/* buttons */
 .buttons {
   display: flex;
   gap: 10px;
+  margin-top: 20px;
 }
 
 button {
@@ -64,16 +93,30 @@ button {
   border-radius: 14px;
   font-weight: bold;
   font-size: 14px;
+  color: white;
+  transition: all 0.15s ease;
 }
 
+/* agree button */
 .agree {
-  background: #22c55e;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
+/* disagree button */
 .disagree {
-  background: #ef4444;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
+/* press animation */
 button:active {
-  transform: scale(0.95);
+  transform: scale(0.93);
+}
+
+/* glow effect on hover/tap */
+.agree:active {
+  box-shadow: 0 0 20px #22c55e;
+}
+
+.disagree:active {
+  box-shadow: 0 0 20px #ef4444;
 }
