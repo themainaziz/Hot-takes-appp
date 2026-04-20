@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Swipe Engine</title>
+<title>Ranked Swipe Feed</title>
 
 <style>
   body {
@@ -16,10 +16,8 @@
 
   .viewport {
     position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
     width: 100vw;
+    height: 100vh;
     overflow: hidden;
   }
 
@@ -30,8 +28,8 @@
   }
 
   .card {
-    height: 100vh;
     width: 100vw;
+    height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -66,88 +64,127 @@
 </div>
 
 <script>
-// --------------------
-// DATA
-// --------------------
-const data = [
-  "AI is replacing entry-level jobs",
-  "Attention spans are collapsing",
-  "Crypto is still alive",
-  "Remote work is irreversible",
-  "Most startups fail due to timing",
-  "Short-form content is addictive",
-  "Phones are replacing TVs",
-  "Inflation is changing behavior",
-  "Social media is engineered addiction"
+// ============================
+// RAW CONTENT POOL
+// ============================
+let rawItems = [
+  { id: 1, text: "AI is replacing entry-level jobs", topic: "ai", engagement: 120, timestamp: Date.now() - 10000 },
+  { id: 2, text: "Attention spans are collapsing", topic: "culture", engagement: 95, timestamp: Date.now() - 20000 },
+  { id: 3, text: "Crypto is still alive", topic: "finance", engagement: 80, timestamp: Date.now() - 30000 },
+  { id: 4, text: "Remote work is irreversible", topic: "work", engagement: 140, timestamp: Date.now() - 40000 },
+  { id: 5, text: "Short-form content is addictive", topic: "media", engagement: 200, timestamp: Date.now() - 50000 }
 ];
 
-// --------------------
-// BUILD CARDS
-// --------------------
-const track = document.getElementById("track");
+// ============================
+// RANKING ENGINE
+// ============================
+function scoreItem(item, seenTopics = {}) {
+  const now = Date.now();
 
-data.forEach(text => {
+  const recencyScore = Math.max(0, 1 - (now - item.timestamp) / 600000);
+  const engagementScore = Math.log(item.engagement + 1) / 5;
+  const topicPenalty = seenTopics[item.topic] ? 0.4 : 1;
+  const exploration = Math.random() * 0.2;
+
+  return (recencyScore + engagementScore + exploration) * topicPenalty;
+}
+
+// ============================
+// GENERATE NEW CONTENT
+// ============================
+function generateNewItem() {
+  const topics = ["ai", "finance", "culture", "work", "media"];
+
+  return {
+    id: Math.random(),
+    text: "New trending insight #" + Math.floor(Math.random() * 1000),
+    topic: topics[Math.floor(Math.random() * topics.length)],
+    engagement: Math.floor(Math.random() * 150),
+    timestamp: Date.now()
+  };
+}
+
+// ============================
+// BUILD RANKED FEED
+// ============================
+function buildFeed(items, count = 25) {
+  let seenTopics = {};
+  let pool = [...items];
+  let feed = [];
+
+  for (let i = 0; i < count; i++) {
+
+    const scored = pool.map(item => ({
+      item,
+      score: scoreItem(item, seenTopics)
+    }));
+
+    scored.sort((a, b) => b.score - a.score);
+
+    const chosen = scored[0].item;
+    feed.push(chosen);
+
+    seenTopics[chosen.topic] = true;
+    pool = pool.filter(i => i.id !== chosen.id);
+
+    if (pool.length < 2) {
+      pool.push(generateNewItem());
+    }
+  }
+
+  return feed;
+}
+
+// ============================
+// INIT FEED
+// ============================
+const track = document.getElementById("track");
+let data = buildFeed(rawItems, 30);
+
+data.forEach(item => {
   const el = document.createElement("div");
   el.className = "card";
 
   el.innerHTML = `
     <div class="content">
-      <div class="title">${text}</div>
-      <div class="tag">#hot #feed</div>
+      <div class="title">${item.text}</div>
+      <div class="tag">#${item.topic}</div>
     </div>
   `;
 
   track.appendChild(el);
 });
 
-// --------------------
-// SWIPE ENGINE STATE
-// --------------------
+// ============================
+// SWIPE ENGINE
+// ============================
 let index = 0;
 let startY = 0;
 let currentY = 0;
 let velocity = 0;
-let lastMoveTime = 0;
 let lastMoveY = 0;
-let isDragging = false;
+let lastTime = 0;
+let dragging = false;
 
-const cards = document.querySelectorAll(".card");
-
-// --------------------
-// HELPERS
-// --------------------
-function setPosition(y) {
+function setY(y) {
   track.style.transform = `translateY(${y}px)`;
 }
 
-function clampIndex(i) {
-  return Math.max(0, Math.min(data.length - 1, i));
-}
-
-function snapToIndex() {
-  index = clampIndex(index);
+function snap() {
+  index = Math.max(0, Math.min(data.length - 1, index));
   animateTo(-index * window.innerHeight);
 }
 
-// --------------------
-// ANIMATION ENGINE
-// --------------------
-let animating = false;
-
-function animateTo(targetY) {
-  animating = true;
-
+function animateTo(target) {
   function step() {
-    const current = getTranslateY(track);
-    const diff = targetY - current;
+    const current = getY();
+    const diff = target - current;
 
-    const newY = current + diff * 0.18;
-
-    setPosition(newY);
+    const next = current + diff * 0.18;
+    setY(next);
 
     if (Math.abs(diff) < 0.5) {
-      setPosition(targetY);
-      animating = false;
+      setY(target);
       return;
     }
 
@@ -157,103 +194,97 @@ function animateTo(targetY) {
   requestAnimationFrame(step);
 }
 
-function getTranslateY(el) {
-  const style = window.getComputedStyle(el);
-  const matrix = new DOMMatrixReadOnly(style.transform);
-  return matrix.m42;
+function getY() {
+  const t = window.getComputedStyle(track).transform;
+  if (t === "none") return 0;
+  return new DOMMatrixReadOnly(t).m42;
 }
 
-// --------------------
-// TOUCH HANDLERS
-// --------------------
-const viewport = document.getElementById("viewport");
+// ============================
+// TOUCH EVENTS
+// ============================
+const vp = document.getElementById("viewport");
 
-viewport.addEventListener("touchstart", (e) => {
-  isDragging = true;
+vp.addEventListener("touchstart", e => {
+  dragging = true;
   startY = e.touches[0].clientY;
   lastMoveY = startY;
-  lastMoveTime = Date.now();
-  velocity = 0;
+  lastTime = Date.now();
 });
 
-viewport.addEventListener("touchmove", (e) => {
-  if (!isDragging) return;
+vp.addEventListener("touchmove", e => {
+  if (!dragging) return;
 
   const y = e.touches[0].clientY;
   const delta = y - startY;
 
   const now = Date.now();
-  const dt = now - lastMoveTime;
+  const dt = now - lastTime;
 
   velocity = (y - lastMoveY) / (dt || 1);
 
   lastMoveY = y;
-  lastMoveTime = now;
+  lastTime = now;
 
   currentY = -index * window.innerHeight + delta;
-  setPosition(currentY);
+  setY(currentY);
 });
 
-viewport.addEventListener("touchend", () => {
-  isDragging = false;
-
-  // --------------------
-  // VELOCITY DECISION
-  // --------------------
-  if (velocity < -0.5) {
-    index++;
-  } else if (velocity > 0.5) {
-    index--;
-  } else {
-    const offset = currentY + index * window.innerHeight;
-    if (offset < -100) index++;
-    if (offset > 100) index--;
-  }
-
-  snapToIndex();
-});
-
-// --------------------
-// MOUSE SUPPORT (desktop)
-// --------------------
-viewport.addEventListener("mousedown", (e) => {
-  isDragging = true;
-  startY = e.clientY;
-  lastMoveY = startY;
-  lastMoveTime = Date.now();
-});
-
-window.addEventListener("mousemove", (e) => {
-  if (!isDragging) return;
-
-  const y = e.clientY;
-  const delta = y - startY;
-
-  const now = Date.now();
-  const dt = now - lastMoveTime;
-
-  velocity = (y - lastMoveY) / (dt || 1);
-
-  lastMoveY = y;
-  lastMoveTime = now;
-
-  currentY = -index * window.innerHeight + delta;
-  setPosition(currentY);
-});
-
-window.addEventListener("mouseup", () => {
-  if (!isDragging) return;
-  isDragging = false;
+vp.addEventListener("touchend", () => {
+  dragging = false;
 
   if (velocity < -0.5) index++;
   else if (velocity > 0.5) index--;
   else {
     const offset = currentY + index * window.innerHeight;
-    if (offset < -100) index++;
-    if (offset > 100) index--;
+    if (offset < -120) index++;
+    if (offset > 120) index--;
   }
 
-  snapToIndex();
+  snap();
+});
+
+// ============================
+// MOUSE SUPPORT
+// ============================
+vp.addEventListener("mousedown", e => {
+  dragging = true;
+  startY = e.clientY;
+  lastMoveY = startY;
+  lastTime = Date.now();
+});
+
+window.addEventListener("mousemove", e => {
+  if (!dragging) return;
+
+  const y = e.clientY;
+  const delta = y - startY;
+
+  const now = Date.now();
+  const dt = now - lastTime;
+
+  velocity = (y - lastMoveY) / (dt || 1);
+
+  lastMoveY = y;
+  lastTime = now;
+
+  currentY = -index * window.innerHeight + delta;
+  setY(currentY);
+});
+
+window.addEventListener("mouseup", () => {
+  if (!dragging) return;
+  dragging = false;
+
+  if (velocity < -0.5) index++;
+  else if (velocity > 0.5) index--;
+  else {
+    const offset = currentY + index * window.innerHeight;
+    if (offset < -120) index++;
+    if (offset > 120) index--;
+  }
+
+  snap();
 });
 </script>
 
