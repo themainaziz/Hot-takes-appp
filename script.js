@@ -24,3 +24,33 @@ const takes = [
   "Most ‘glow ups’ are just better lighting and angles",
   "Arguing on social media is unpaid overtime for stupidity"
 ];
+function showReaction(percent, type) {
+  const msg = document.createElement("div");
+
+  let text = "";
+
+  if (type === "agree" && percent < 50) {
+    text = "💀 You are fighting the majority";
+  } else if (type === "disagree" && percent > 50) {
+    text = "💀 You are in the minority";
+  } else {
+    text = "🔥 You are with the crowd";
+  }
+
+  msg.innerText = text;
+
+  msg.style.position = "absolute";
+  msg.style.top = "30%";
+  msg.style.left = "50%";
+  msg.style.transform = "translateX(-50%)";
+  msg.style.background = "rgba(0,0,0,0.8)";
+  msg.style.padding = "12px 18px";
+  msg.style.borderRadius = "12px";
+  msg.style.fontSize = "16px";
+  msg.style.color = "white";
+  msg.style.zIndex = "999";
+
+  document.body.appendChild(msg);
+
+  setTimeout(() => msg.remove(), 1200);
+}
