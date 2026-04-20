@@ -1,49 +1,43 @@
 const takes = [
   "Messi is better than Ronaldo",
-  "The Premier League is overrated",
-  "VAR has ruined football",
+  "School is a scam",
+  "Most people fake confidence",
+  "iPhone users are in a cult",
+  "Android is actually better",
   "Drake is overrated",
-  "Android is better than iPhone",
-  "School doesn’t prepare you for real life",
-  "Social media makes people insecure",
-  "Most influencers are overrated",
-  "Anime is better than live action movies",
-  "Money matters more than passion",
-  "Pineapple belongs on pizza",
-  "Group projects are just stress",
-  "Voice notes over 30 seconds are annoying",
-  "Most people follow trends blindly",
-  "Netflix is getting worse",
-  "Everyone thinks they’re the main character",
-  "Arguments online are pointless",
-  "Waking up early is overrated",
   "People pretend to be busy",
-  "Confidence matters more than intelligence",
-  "Gym selfies cancel the workout",
-  "People fake being busy to feel important",
-  "Most TikTok advice is useless",
-  "Hustle culture is toxic",
-  "People don’t read, they just scroll"
+  "Gym selfies are cringe",
+  "Social media ruins confidence",
+  "Most influencers are useless",
+  "Netflix is boring now",
+  "Waking up early is overrated",
+  "Group projects are torture",
+  "Voice notes are annoying",
+  "People follow trends blindly",
+  "Money > passion",
+  "Nobody reads anymore",
+  "Everyone thinks they’re special",
+  "Arguments online are pointless",
+  "Confidence beats intelligence"
 ];
 
 let agree = 50;
 let disagree = 50;
-let isTransitioning = false;
+let streak = 0;
+let isAnimating = false;
 
-// LOAD NEW TAKE
+// LOAD TAKE
 function loadTake() {
-  if (isTransitioning) return;
-  isTransitioning = true;
+  if (isAnimating) return;
+  isAnimating = true;
 
-  const card = document.querySelector(".card");
+  const card = document.getElementById("card");
 
-  // fade out
   card.style.opacity = "0";
-  card.style.transform = "translateY(20px)";
+  card.style.transform = "translateY(40px)";
 
   setTimeout(() => {
-    const randomIndex = Math.floor(Math.random() * takes.length);
-    const take = takes[randomIndex];
+    const take = takes[Math.floor(Math.random() * takes.length)];
 
     document.getElementById("take").innerText = take;
     document.getElementById("category").innerText = "HOT TAKE";
@@ -53,15 +47,14 @@ function loadTake() {
 
     updateUI();
 
-    // fade in
     card.style.opacity = "1";
     card.style.transform = "translateY(0)";
 
-    isTransitioning = false;
+    isAnimating = false;
   }, 200);
 }
 
-// UPDATE UI
+// UPDATE BAR
 function updateUI() {
   let total = agree + disagree;
   let percent = Math.round((agree / total) * 100);
@@ -70,77 +63,69 @@ function updateUI() {
   document.getElementById("percent").innerText = percent + "% Agree";
 }
 
-// REACTION POPUP
-function showReaction(percent, type) {
-  const msg = document.createElement("div");
+// POPUP
+function showPopup(text) {
+  const pop = document.createElement("div");
 
-  let text = "";
+  pop.innerText = text;
 
-  if (type === "agree" && percent < 50) {
-    text = "💀 You are alone on this one";
-  } else if (type === "disagree" && percent > 50) {
-    text = "💀 Nobody agrees with you";
-  } else if (percent > 80) {
-    text = "🔥 This is basically fact";
-  } else if (percent < 20) {
-    text = "💀 This take is horrible";
-  } else {
-    text = "🤝 You’re with the majority";
-  }
+  pop.style.position = "fixed";
+  pop.style.top = "40%";
+  pop.style.left = "50%";
+  pop.style.transform = "translateX(-50%) scale(0.8)";
+  pop.style.background = "rgba(0,0,0,0.9)";
+  pop.style.padding = "14px 20px";
+  pop.style.borderRadius = "14px";
+  pop.style.fontSize = "16px";
+  pop.style.opacity = "0";
+  pop.style.transition = "0.25s ease";
 
-  msg.innerText = text;
-
-  msg.style.position = "fixed";
-  msg.style.top = "35%";
-  msg.style.left = "50%";
-  msg.style.transform = "translateX(-50%) scale(0.9)";
-  msg.style.background = "rgba(0,0,0,0.85)";
-  msg.style.padding = "14px 22px";
-  msg.style.borderRadius = "14px";
-  msg.style.fontSize = "16px";
-  msg.style.color = "white";
-  msg.style.zIndex = "999";
-  msg.style.opacity = "0";
-  msg.style.transition = "all 0.25s ease";
-
-  document.body.appendChild(msg);
+  document.body.appendChild(pop);
 
   setTimeout(() => {
-    msg.style.opacity = "1";
-    msg.style.transform = "translateX(-50%) scale(1)";
+    pop.style.opacity = "1";
+    pop.style.transform = "translateX(-50%) scale(1)";
   }, 10);
 
   setTimeout(() => {
-    msg.style.opacity = "0";
-    msg.style.transform = "translateX(-50%) scale(0.9)";
+    pop.style.opacity = "0";
   }, 900);
 
-  setTimeout(() => msg.remove(), 1200);
+  setTimeout(() => pop.remove(), 1200);
 }
 
 // VOTE
 function vote(type) {
-  if (isTransitioning) return;
+  if (isAnimating) return;
 
   if (type === "agree") agree++;
   else disagree++;
+
+  streak++;
+  document.getElementById("streak").innerText = "🔥 " + streak;
 
   updateUI();
 
   let total = agree + disagree;
   let percent = Math.round((agree / total) * 100);
 
-  showReaction(percent, type);
+  if (percent > 80) showPopup("🔥 Everyone agrees");
+  else if (percent < 20) showPopup("💀 Terrible take");
+  else if ((type === "agree" && percent < 50) || (type === "disagree" && percent > 50)) {
+    showPopup("💀 You’re in the minority");
+  } else {
+    showPopup("🤝 Fair take");
+  }
 
   setTimeout(loadTake, 500);
 }
 
-// TAP ANYWHERE TO SKIP (TikTok feel)
-document.body.addEventListener("click", function(e) {
+// TAP TO SKIP
+document.body.addEventListener("click", (e) => {
   if (e.target.tagName !== "BUTTON") {
     loadTake();
   }
 });
 
-// START APP
+// START
 loadTake();
