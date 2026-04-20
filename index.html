@@ -3,190 +3,258 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Feed App</title>
+<title>Swipe Engine</title>
 
 <style>
   body {
     margin: 0;
     background: #000;
-    color: #fff;
+    overflow: hidden;
     font-family: Arial, sans-serif;
+    color: #fff;
+  }
+
+  .viewport {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
     overflow: hidden;
   }
 
-  /* TOP BAR */
-  .top {
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    opacity: 0.8;
-  }
-
-  /* FEED AREA */
-  .feed {
-    height: calc(100vh - 100px);
-    overflow-y: auto;
-    scroll-snap-type: y mandatory;
+  .track {
+    position: absolute;
+    width: 100%;
+    will-change: transform;
   }
 
   .card {
-    height: 100%;
-    scroll-snap-align: start;
+    height: 100vh;
+    width: 100vw;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    box-sizing: border-box;
-
-    transform: scale(0.98);
-    transition: transform 0.3s ease;
-  }
-
-  .card.active {
-    transform: scale(1);
   }
 
   .content {
-    width: 90%;
-    max-width: 400px;
+    width: 85%;
+    max-width: 420px;
     background: #111;
+    padding: 24px;
     border-radius: 20px;
-    padding: 20px;
     text-align: center;
-    box-shadow: 0 0 20px rgba(255,255,255,0.05);
+    box-shadow: 0 10px 40px rgba(255,255,255,0.08);
   }
 
-  .hot {
+  .title {
     font-size: 18px;
     margin-bottom: 10px;
   }
 
   .tag {
-    font-size: 12px;
     opacity: 0.6;
-  }
-
-  /* BOTTOM NAV */
-  .bottom {
-    height: 50px;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    border-top: 1px solid #222;
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    background: #000;
-  }
-
-  .btn {
     font-size: 12px;
-    opacity: 0.7;
-  }
-
-  .btn.active {
-    opacity: 1;
   }
 </style>
 </head>
 
 <body>
 
-<div class="top">🔥 LIVE FEED</div>
-
-<div class="feed" id="feed"></div>
-
-<div class="bottom">
-  <div class="btn active">Home</div>
-  <div class="btn">Search</div>
-  <div class="btn">Profile</div>
+<div class="viewport" id="viewport">
+  <div class="track" id="track"></div>
 </div>
 
 <script>
 // --------------------
-// HOT TAKE DATA SOURCE
+// DATA
 // --------------------
-const rawHotTakes = [
-  "AI will replace most entry jobs",
-  "Crypto is not dead yet",
-  "Social media is ruining attention spans",
-  "Remote work is permanent",
-  "Most startups fail because of timing",
-  "Short form content is addictive by design",
-  "AI will replace most entry jobs", // duplicate on purpose
-  "Inflation is reshaping youth spending",
-  "Phones are the new TV"
+const data = [
+  "AI is replacing entry-level jobs",
+  "Attention spans are collapsing",
+  "Crypto is still alive",
+  "Remote work is irreversible",
+  "Most startups fail due to timing",
+  "Short-form content is addictive",
+  "Phones are replacing TVs",
+  "Inflation is changing behavior",
+  "Social media is engineered addiction"
 ];
 
 // --------------------
-// DEDUPE LOGIC
+// BUILD CARDS
 // --------------------
-function getUniqueItems(items) {
-  const seen = new Set();
-  const result = [];
+const track = document.getElementById("track");
 
-  for (let item of items) {
-    const key = item.toLowerCase().trim();
+data.forEach(text => {
+  const el = document.createElement("div");
+  el.className = "card";
 
-    if (!seen.has(key)) {
-      seen.add(key);
-      result.push(item);
-    }
-  }
-
-  return result;
-}
-
-const hotTakes = getUniqueItems(rawHotTakes);
-
-// --------------------
-// BUILD FEED
-// --------------------
-const feed = document.getElementById("feed");
-
-hotTakes.forEach((text, i) => {
-  const card = document.createElement("div");
-  card.className = "card";
-
-  card.innerHTML = `
+  el.innerHTML = `
     <div class="content">
-      <div class="hot">${text}</div>
-      <div class="tag">#hot-take #trending</div>
+      <div class="title">${text}</div>
+      <div class="tag">#hot #feed</div>
     </div>
   `;
 
-  feed.appendChild(card);
+  track.appendChild(el);
 });
 
 // --------------------
-// ACTIVE CARD EFFECT
+// SWIPE ENGINE STATE
 // --------------------
+let index = 0;
+let startY = 0;
+let currentY = 0;
+let velocity = 0;
+let lastMoveTime = 0;
+let lastMoveY = 0;
+let isDragging = false;
+
 const cards = document.querySelectorAll(".card");
 
-function updateActiveCard() {
-  let closest = null;
-  let minDist = Infinity;
-
-  cards.forEach(card => {
-    const rect = card.getBoundingClientRect();
-    const dist = Math.abs(rect.top);
-
-    if (dist < minDist) {
-      minDist = dist;
-      closest = card;
-    }
-  });
-
-  cards.forEach(c => c.classList.remove("active"));
-  if (closest) closest.classList.add("active");
+// --------------------
+// HELPERS
+// --------------------
+function setPosition(y) {
+  track.style.transform = `translateY(${y}px)`;
 }
 
-feed.addEventListener("scroll", updateActiveCard);
+function clampIndex(i) {
+  return Math.max(0, Math.min(data.length - 1, i));
+}
 
-// initial call
-updateActiveCard();
+function snapToIndex() {
+  index = clampIndex(index);
+  animateTo(-index * window.innerHeight);
+}
+
+// --------------------
+// ANIMATION ENGINE
+// --------------------
+let animating = false;
+
+function animateTo(targetY) {
+  animating = true;
+
+  function step() {
+    const current = getTranslateY(track);
+    const diff = targetY - current;
+
+    const newY = current + diff * 0.18;
+
+    setPosition(newY);
+
+    if (Math.abs(diff) < 0.5) {
+      setPosition(targetY);
+      animating = false;
+      return;
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  requestAnimationFrame(step);
+}
+
+function getTranslateY(el) {
+  const style = window.getComputedStyle(el);
+  const matrix = new DOMMatrixReadOnly(style.transform);
+  return matrix.m42;
+}
+
+// --------------------
+// TOUCH HANDLERS
+// --------------------
+const viewport = document.getElementById("viewport");
+
+viewport.addEventListener("touchstart", (e) => {
+  isDragging = true;
+  startY = e.touches[0].clientY;
+  lastMoveY = startY;
+  lastMoveTime = Date.now();
+  velocity = 0;
+});
+
+viewport.addEventListener("touchmove", (e) => {
+  if (!isDragging) return;
+
+  const y = e.touches[0].clientY;
+  const delta = y - startY;
+
+  const now = Date.now();
+  const dt = now - lastMoveTime;
+
+  velocity = (y - lastMoveY) / (dt || 1);
+
+  lastMoveY = y;
+  lastMoveTime = now;
+
+  currentY = -index * window.innerHeight + delta;
+  setPosition(currentY);
+});
+
+viewport.addEventListener("touchend", () => {
+  isDragging = false;
+
+  // --------------------
+  // VELOCITY DECISION
+  // --------------------
+  if (velocity < -0.5) {
+    index++;
+  } else if (velocity > 0.5) {
+    index--;
+  } else {
+    const offset = currentY + index * window.innerHeight;
+    if (offset < -100) index++;
+    if (offset > 100) index--;
+  }
+
+  snapToIndex();
+});
+
+// --------------------
+// MOUSE SUPPORT (desktop)
+// --------------------
+viewport.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  startY = e.clientY;
+  lastMoveY = startY;
+  lastMoveTime = Date.now();
+});
+
+window.addEventListener("mousemove", (e) => {
+  if (!isDragging) return;
+
+  const y = e.clientY;
+  const delta = y - startY;
+
+  const now = Date.now();
+  const dt = now - lastMoveTime;
+
+  velocity = (y - lastMoveY) / (dt || 1);
+
+  lastMoveY = y;
+  lastMoveTime = now;
+
+  currentY = -index * window.innerHeight + delta;
+  setPosition(currentY);
+});
+
+window.addEventListener("mouseup", () => {
+  if (!isDragging) return;
+  isDragging = false;
+
+  if (velocity < -0.5) index++;
+  else if (velocity > 0.5) index--;
+  else {
+    const offset = currentY + index * window.innerHeight;
+    if (offset < -100) index++;
+    if (offset > 100) index--;
+  }
+
+  snapToIndex();
+});
 </script>
 
 </body>
