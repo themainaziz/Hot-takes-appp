@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ranked Swipe Feed</title>
+<title>Ultimate Feed Engine</title>
 
 <style>
   body {
@@ -53,7 +53,25 @@
   .tag {
     opacity: 0.6;
     font-size: 12px;
+    margin-bottom: 15px;
   }
+
+  button {
+    background: #222;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 5px;
+  }
+
+  button:active {
+    transform: scale(0.95);
+  }
+
+  .agree:hover { background: #1f6f3f; }
+  .disagree:hover { background: #7a1f1f; }
 </style>
 </head>
 
@@ -65,28 +83,28 @@
 
 <script>
 // ============================
-// RAW CONTENT POOL
+// INITIAL DATA
 // ============================
 let rawItems = [
-  { id: 1, text: "AI is replacing entry-level jobs", topic: "ai", engagement: 120, timestamp: Date.now() - 10000 },
-  { id: 2, text: "Attention spans are collapsing", topic: "culture", engagement: 95, timestamp: Date.now() - 20000 },
-  { id: 3, text: "Crypto is still alive", topic: "finance", engagement: 80, timestamp: Date.now() - 30000 },
-  { id: 4, text: "Remote work is irreversible", topic: "work", engagement: 140, timestamp: Date.now() - 40000 },
-  { id: 5, text: "Short-form content is addictive", topic: "media", engagement: 200, timestamp: Date.now() - 50000 }
+  { id: 1, text: "AI is replacing entry-level jobs", topic: "ai", agree: 0, disagree: 0, engagement: 120, timestamp: Date.now() - 10000 },
+  { id: 2, text: "Attention spans are collapsing", topic: "culture", agree: 0, disagree: 0, engagement: 95, timestamp: Date.now() - 20000 },
+  { id: 3, text: "Crypto is still alive", topic: "finance", agree: 0, disagree: 0, engagement: 80, timestamp: Date.now() - 30000 },
+  { id: 4, text: "Remote work is irreversible", topic: "work", agree: 0, disagree: 0, engagement: 140, timestamp: Date.now() - 40000 },
+  { id: 5, text: "Short-form content is addictive", topic: "media", agree: 0, disagree: 0, engagement: 200, timestamp: Date.now() - 50000 }
 ];
 
 // ============================
-// RANKING ENGINE
+// SCORING ALGORITHM
 // ============================
 function scoreItem(item, seenTopics = {}) {
   const now = Date.now();
 
-  const recencyScore = Math.max(0, 1 - (now - item.timestamp) / 600000);
-  const engagementScore = Math.log(item.engagement + 1) / 5;
-  const topicPenalty = seenTopics[item.topic] ? 0.4 : 1;
-  const exploration = Math.random() * 0.2;
+  const recency = Math.max(0, 1 - (now - item.timestamp) / 600000);
+  const engagement = Math.log(item.engagement + 1) / 5;
+  const diversity = seenTopics[item.topic] ? 0.4 : 1;
+  const randomness = Math.random() * 0.2;
 
-  return (recencyScore + engagementScore + exploration) * topicPenalty;
+  return (recency + engagement + randomness) * diversity;
 }
 
 // ============================
@@ -97,8 +115,10 @@ function generateNewItem() {
 
   return {
     id: Math.random(),
-    text: "New trending insight #" + Math.floor(Math.random() * 1000),
+    text: "New insight #" + Math.floor(Math.random() * 1000),
     topic: topics[Math.floor(Math.random() * topics.length)],
+    agree: 0,
+    disagree: 0,
     engagement: Math.floor(Math.random() * 150),
     timestamp: Date.now()
   };
@@ -107,7 +127,7 @@ function generateNewItem() {
 // ============================
 // BUILD RANKED FEED
 // ============================
-function buildFeed(items, count = 25) {
+function buildFeed(items, count = 30) {
   let seenTopics = {};
   let pool = [...items];
   let feed = [];
@@ -149,8 +169,31 @@ data.forEach(item => {
     <div class="content">
       <div class="title">${item.text}</div>
       <div class="tag">#${item.topic}</div>
+
+      <div>
+        <button class="agree">👍 ${item.agree}</button>
+        <button class="disagree">👎 ${item.disagree}</button>
+      </div>
     </div>
   `;
+
+  // interactions
+  const agreeBtn = el.querySelector(".agree");
+  const disagreeBtn = el.querySelector(".disagree");
+
+  agreeBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    item.agree++;
+    agreeBtn.innerHTML = `👍 ${item.agree}`;
+    item.engagement += 2;
+  });
+
+  disagreeBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    item.disagree++;
+    disagreeBtn.innerHTML = `👎 ${item.disagree}`;
+    item.engagement += 1;
+  });
 
   track.appendChild(el);
 });
@@ -162,7 +205,7 @@ let index = 0;
 let startY = 0;
 let currentY = 0;
 let velocity = 0;
-let lastMoveY = 0;
+let lastY = 0;
 let lastTime = 0;
 let dragging = false;
 
@@ -170,9 +213,10 @@ function setY(y) {
   track.style.transform = `translateY(${y}px)`;
 }
 
-function snap() {
-  index = Math.max(0, Math.min(data.length - 1, index));
-  animateTo(-index * window.innerHeight);
+function getY() {
+  const t = window.getComputedStyle(track).transform;
+  if (t === "none") return 0;
+  return new DOMMatrixReadOnly(t).m42;
 }
 
 function animateTo(target) {
@@ -194,21 +238,20 @@ function animateTo(target) {
   requestAnimationFrame(step);
 }
 
-function getY() {
-  const t = window.getComputedStyle(track).transform;
-  if (t === "none") return 0;
-  return new DOMMatrixReadOnly(t).m42;
+function snap() {
+  index = Math.max(0, Math.min(data.length - 1, index));
+  animateTo(-index * window.innerHeight);
 }
 
 // ============================
-// TOUCH EVENTS
+// TOUCH
 // ============================
 const vp = document.getElementById("viewport");
 
 vp.addEventListener("touchstart", e => {
   dragging = true;
   startY = e.touches[0].clientY;
-  lastMoveY = startY;
+  lastY = startY;
   lastTime = Date.now();
 });
 
@@ -221,9 +264,9 @@ vp.addEventListener("touchmove", e => {
   const now = Date.now();
   const dt = now - lastTime;
 
-  velocity = (y - lastMoveY) / (dt || 1);
+  velocity = (y - lastY) / (dt || 1);
 
-  lastMoveY = y;
+  lastY = y;
   lastTime = now;
 
   currentY = -index * window.innerHeight + delta;
@@ -245,12 +288,12 @@ vp.addEventListener("touchend", () => {
 });
 
 // ============================
-// MOUSE SUPPORT
+// MOUSE
 // ============================
 vp.addEventListener("mousedown", e => {
   dragging = true;
   startY = e.clientY;
-  lastMoveY = startY;
+  lastY = startY;
   lastTime = Date.now();
 });
 
@@ -263,9 +306,9 @@ window.addEventListener("mousemove", e => {
   const now = Date.now();
   const dt = now - lastTime;
 
-  velocity = (y - lastMoveY) / (dt || 1);
+  velocity = (y - lastY) / (dt || 1);
 
-  lastMoveY = y;
+  lastY = y;
   lastTime = now;
 
   currentY = -index * window.innerHeight + delta;
