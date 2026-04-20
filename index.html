@@ -1,35 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hot Takes</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Feed App</title>
+
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  /* TOP BAR */
+  .top {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    opacity: 0.8;
+  }
+
+  /* FEED AREA */
+  .feed {
+    height: calc(100vh - 100px);
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+  }
+
+  .card {
+    height: 100%;
+    scroll-snap-align: start;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+
+    transform: scale(0.98);
+    transition: transform 0.3s ease;
+  }
+
+  .card.active {
+    transform: scale(1);
+  }
+
+  .content {
+    width: 90%;
+    max-width: 400px;
+    background: #111;
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(255,255,255,0.05);
+  }
+
+  .hot {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+
+  .tag {
+    font-size: 12px;
+    opacity: 0.6;
+  }
+
+  /* BOTTOM NAV */
+  .bottom {
+    height: 50px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #222;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: #000;
+  }
+
+  .btn {
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  .btn.active {
+    opacity: 1;
+  }
+</style>
 </head>
+
 <body>
 
-<div class="screen" id="screen">
+<div class="top">🔥 LIVE FEED</div>
 
-  <div class="overlay">
-    <h4 id="category">HOT TAKE</h4>
-    <h1 id="take">Loading...</h1>
+<div class="feed" id="feed"></div>
 
-    <div class="bar">
-      <div id="agreeBar"></div>
-    </div>
-
-    <p id="percent">50% Agree</p>
-
-    <div class="actions">
-      <button onclick="vote('agree')" class="agree">👍</button>
-      <button onclick="vote('disagree')" class="disagree">👎</button>
-    </div>
-  </div>
-  
-
+<div class="bottom">
+  <div class="btn active">Home</div>
+  <div class="btn">Search</div>
+  <div class="btn">Profile</div>
 </div>
 
-<script src="script.js"></script>
+<script>
+// --------------------
+// HOT TAKE DATA SOURCE
+// --------------------
+const rawHotTakes = [
+  "AI will replace most entry jobs",
+  "Crypto is not dead yet",
+  "Social media is ruining attention spans",
+  "Remote work is permanent",
+  "Most startups fail because of timing",
+  "Short form content is addictive by design",
+  "AI will replace most entry jobs", // duplicate on purpose
+  "Inflation is reshaping youth spending",
+  "Phones are the new TV"
+];
+
+// --------------------
+// DEDUPE LOGIC
+// --------------------
+function getUniqueItems(items) {
+  const seen = new Set();
+  const result = [];
+
+  for (let item of items) {
+    const key = item.toLowerCase().trim();
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(item);
+    }
+  }
+
+  return result;
+}
+
+const hotTakes = getUniqueItems(rawHotTakes);
+
+// --------------------
+// BUILD FEED
+// --------------------
+const feed = document.getElementById("feed");
+
+hotTakes.forEach((text, i) => {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  card.innerHTML = `
+    <div class="content">
+      <div class="hot">${text}</div>
+      <div class="tag">#hot-take #trending</div>
+    </div>
+  `;
+
+  feed.appendChild(card);
+});
+
+// --------------------
+// ACTIVE CARD EFFECT
+// --------------------
+const cards = document.querySelectorAll(".card");
+
+function updateActiveCard() {
+  let closest = null;
+  let minDist = Infinity;
+
+  cards.forEach(card => {
+    const rect = card.getBoundingClientRect();
+    const dist = Math.abs(rect.top);
+
+    if (dist < minDist) {
+      minDist = dist;
+      closest = card;
+    }
+  });
+
+  cards.forEach(c => c.classList.remove("active"));
+  if (closest) closest.classList.add("active");
+}
+
+feed.addEventListener("scroll", updateActiveCard);
+
+// initial call
+updateActiveCard();
+</script>
+
 </body>
 </html>
-<button onclick="shareTake()" class="share">📤</button>
