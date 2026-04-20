@@ -18,27 +18,50 @@ const takes = [
   "Arguments online are pointless",
   "Waking up early is overrated",
   "People pretend to be busy",
-  "Confidence matters more than intelligence"
+  "Confidence matters more than intelligence",
+  "Gym selfies cancel the workout",
+  "People fake being busy to feel important",
+  "Most TikTok advice is useless",
+  "Hustle culture is toxic",
+  "People don’t read, they just scroll"
 ];
 
 let agree = 50;
 let disagree = 50;
+let isTransitioning = false;
 
-// load a new random take
+// LOAD NEW TAKE
 function loadTake() {
-  const randomIndex = Math.floor(Math.random() * takes.length);
-  const take = takes[randomIndex];
+  if (isTransitioning) return;
+  isTransitioning = true;
 
-  document.getElementById("take").innerText = take;
-  document.getElementById("category").innerText = "HOT TAKE";
+  const card = document.querySelector(".card");
 
-  agree = 50;
-  disagree = 50;
+  // fade out
+  card.style.opacity = "0";
+  card.style.transform = "translateY(20px)";
 
-  updateUI();
+  setTimeout(() => {
+    const randomIndex = Math.floor(Math.random() * takes.length);
+    const take = takes[randomIndex];
+
+    document.getElementById("take").innerText = take;
+    document.getElementById("category").innerText = "HOT TAKE";
+
+    agree = 50;
+    disagree = 50;
+
+    updateUI();
+
+    // fade in
+    card.style.opacity = "1";
+    card.style.transform = "translateY(0)";
+
+    isTransitioning = false;
+  }, 200);
 }
 
-// update percentage bar
+// UPDATE UI
 function updateUI() {
   let total = agree + disagree;
   let percent = Math.round((agree / total) * 100);
@@ -47,55 +70,77 @@ function updateUI() {
   document.getElementById("percent").innerText = percent + "% Agree";
 }
 
-// reaction popup
+// REACTION POPUP
 function showReaction(percent, type) {
   const msg = document.createElement("div");
 
   let text = "";
 
   if (type === "agree" && percent < 50) {
-    text = "💀 You are in the minority";
+    text = "💀 You are alone on this one";
   } else if (type === "disagree" && percent > 50) {
-    text = "💀 You are in the minority";
+    text = "💀 Nobody agrees with you";
+  } else if (percent > 80) {
+    text = "🔥 This is basically fact";
+  } else if (percent < 20) {
+    text = "💀 This take is horrible";
   } else {
-    text = "🔥 You are with the majority";
+    text = "🤝 You’re with the majority";
   }
 
   msg.innerText = text;
 
-  msg.style.position = "absolute";
+  msg.style.position = "fixed";
   msg.style.top = "35%";
   msg.style.left = "50%";
-  msg.style.transform = "translateX(-50%)";
+  msg.style.transform = "translateX(-50%) scale(0.9)";
   msg.style.background = "rgba(0,0,0,0.85)";
-  msg.style.padding = "12px 20px";
-  msg.style.borderRadius = "12px";
+  msg.style.padding = "14px 22px";
+  msg.style.borderRadius = "14px";
   msg.style.fontSize = "16px";
   msg.style.color = "white";
   msg.style.zIndex = "999";
+  msg.style.opacity = "0";
+  msg.style.transition = "all 0.25s ease";
 
   document.body.appendChild(msg);
+
+  setTimeout(() => {
+    msg.style.opacity = "1";
+    msg.style.transform = "translateX(-50%) scale(1)";
+  }, 10);
+
+  setTimeout(() => {
+    msg.style.opacity = "0";
+    msg.style.transform = "translateX(-50%) scale(0.9)";
+  }, 900);
 
   setTimeout(() => msg.remove(), 1200);
 }
 
-// vote function
+// VOTE
 function vote(type) {
+  if (isTransitioning) return;
+
   if (type === "agree") agree++;
   else disagree++;
+
+  updateUI();
 
   let total = agree + disagree;
   let percent = Math.round((agree / total) * 100);
 
-  document.getElementById("agreeBar").style.width = percent + "%";
-  document.getElementById("percent").innerText = percent + "% Agree";
-
   showReaction(percent, type);
 
-  setTimeout(() => {
-    loadTake();
-  }, 600);
+  setTimeout(loadTake, 500);
 }
 
-// start app
+// TAP ANYWHERE TO SKIP (TikTok feel)
+document.body.addEventListener("click", function(e) {
+  if (e.target.tagName !== "BUTTON") {
+    loadTake();
+  }
+});
+
+// START APP
 loadTake();
