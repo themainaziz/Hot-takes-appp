@@ -1,48 +1,26 @@
 const takes = [
-  "Messi is better than Ronaldo",
-  "The Premier League is overrated",
-  "VAR has ruined football",
-  "Drake is overrated",
-  "Android is better than iPhone",
-  "School doesn’t prepare you for life",
-  "Social media makes people insecure",
-  "Most influencers are overrated",
-  "Anime is better than live action movies",
-  "Money matters more than passion"
+  "Pineapple on pizza is elite and people who disagree are emotional",
+  "Waking up early is just unpaid suffering",
+  "Most people don’t hate Mondays, they hate their life setup",
+  "Voicenotes are aggressive for no reason",
+  "People who say 'I’m not like other people' are exactly like other people",
+  "iPhone users act like they’re in a cult sometimes",
+  "Android users are too defensive for no reason",
+  "School teaches you nothing about taxes but everything about sadness",
+  "Group projects are just solo work with extra stress",
+  "Most arguments online are two people being confidently wrong",
+  "Influencers would struggle in a normal 9–5 for 2 days",
+  "Nobody actually understands crypto, they just nod along",
+  "Netflix has 1 good show every 3 years",
+  "Reading books is just loading screens for real life",
+  "People don’t hate ads, they hate being interrupted",
+  "Gym selfies cancel out 80% of the workout benefits",
+  "Voice messages over 30 seconds are disrespectful",
+  "Most people aren’t busy, they’re just disorganised",
+  "If you need a morning routine video, your life is already off track",
+  "Everyone thinks they’re the main character… and they’re not",
+  "People only like deep quotes when they’re sad",
+  "The group chat is always dead until someone leaves it",
+  "Most ‘glow ups’ are just better lighting and angles",
+  "Arguing on social media is unpaid overtime for stupidity"
 ];
-
-let agree = 50;
-let disagree = 50;
-
-let currentTake = "";
-
-function loadTake() {
-  currentTake = takes[Math.floor(Math.random() * takes.length)];
-
-  document.getElementById("take").innerText = currentTake;
-  document.getElementById("category").innerText = "HOT TAKE";
-
-  agree = 50;
-  disagree = 50;
-
-  updateUI();
-}
-
-function updateUI() {
-  let total = agree + disagree;
-  let percent = Math.round((agree / total) * 100);
-
-  document.getElementById("agreeBar").style.width = percent + "%";
-  document.getElementById("percent").innerText = percent + "% Agree";
-}
-
-function vote(type) {
-  if (type === "agree") agree++;
-  else disagree++;
-
-  updateUI();
-
-  setTimeout(loadTake, 500);
-}
-
-loadTake();
