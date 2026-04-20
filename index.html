@@ -1,38 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hot Takes</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="app">
+<div class="screen" id="screen">
 
-    <div class="top-bar">
-      <h2>🔥 Hot Takes</h2>
-      <span id="streak">🔥 0</span>
+  <div class="overlay">
+    <h4 id="category">HOT TAKE</h4>
+    <h1 id="take">Loading...</h1>
+
+    <div class="bar">
+      <div id="agreeBar"></div>
     </div>
 
-    <div class="card" id="card">
-      <h4 id="category">HOT TAKE</h4>
-      <h1 id="take">Loading...</h1>
+    <p id="percent">50% Agree</p>
 
-      <div class="bar">
-        <div id="agreeBar"></div>
-      </div>
-
-      <p id="percent">50% Agree</p>
-
-      <div class="buttons">
-        <button class="agree" onclick="vote('agree')">AGREE</button>
-        <button class="disagree" onclick="vote('disagree')">DISAGREE</button>
-      </div>
+    <div class="actions">
+      <button onclick="vote('agree')" class="agree">👍</button>
+      <button onclick="vote('disagree')" class="disagree">👎</button>
     </div>
-
   </div>
 
-  <script src="script.js"></script>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
