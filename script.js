@@ -1,9 +1,9 @@
 const takes = [
   "Messi is better than Ronaldo",
-  "School is a scam",
+  "School is useless",
   "Most people fake confidence",
   "iPhone users are in a cult",
-  "Android is actually better",
+  "Android is better",
   "Drake is overrated",
   "People pretend to be busy",
   "Gym selfies are cringe",
@@ -23,18 +23,19 @@ const takes = [
 
 let agree = 50;
 let disagree = 50;
-let streak = 0;
-let isAnimating = false;
+
+let startY = 0;
+let endY = 0;
 
 // LOAD TAKE
-function loadTake() {
-  if (isAnimating) return;
-  isAnimating = true;
+function loadTake(direction = "down") {
+  const screen = document.getElementById("screen");
 
-  const card = document.getElementById("card");
+  screen.style.transform = direction === "down"
+    ? "translateY(-100%)"
+    : "translateY(100%)";
 
-  card.style.opacity = "0";
-  card.style.transform = "translateY(40px)";
+  screen.style.opacity = "0";
 
   setTimeout(() => {
     const take = takes[Math.floor(Math.random() * takes.length)];
@@ -47,14 +48,12 @@ function loadTake() {
 
     updateUI();
 
-    card.style.opacity = "1";
-    card.style.transform = "translateY(0)";
-
-    isAnimating = false;
+    screen.style.transform = "translateY(0)";
+    screen.style.opacity = "1";
   }, 200);
 }
 
-// UPDATE BAR
+// UPDATE UI
 function updateUI() {
   let total = agree + disagree;
   let percent = Math.round((agree / total) * 100);
@@ -63,67 +62,28 @@ function updateUI() {
   document.getElementById("percent").innerText = percent + "% Agree";
 }
 
-// POPUP
-function showPopup(text) {
-  const pop = document.createElement("div");
-
-  pop.innerText = text;
-
-  pop.style.position = "fixed";
-  pop.style.top = "40%";
-  pop.style.left = "50%";
-  pop.style.transform = "translateX(-50%) scale(0.8)";
-  pop.style.background = "rgba(0,0,0,0.9)";
-  pop.style.padding = "14px 20px";
-  pop.style.borderRadius = "14px";
-  pop.style.fontSize = "16px";
-  pop.style.opacity = "0";
-  pop.style.transition = "0.25s ease";
-
-  document.body.appendChild(pop);
-
-  setTimeout(() => {
-    pop.style.opacity = "1";
-    pop.style.transform = "translateX(-50%) scale(1)";
-  }, 10);
-
-  setTimeout(() => {
-    pop.style.opacity = "0";
-  }, 900);
-
-  setTimeout(() => pop.remove(), 1200);
-}
-
 // VOTE
 function vote(type) {
-  if (isAnimating) return;
-
   if (type === "agree") agree++;
   else disagree++;
 
-  streak++;
-  document.getElementById("streak").innerText = "🔥 " + streak;
-
   updateUI();
 
-  let total = agree + disagree;
-  let percent = Math.round((agree / total) * 100);
-
-  if (percent > 80) showPopup("🔥 Everyone agrees");
-  else if (percent < 20) showPopup("💀 Terrible take");
-  else if ((type === "agree" && percent < 50) || (type === "disagree" && percent > 50)) {
-    showPopup("💀 You’re in the minority");
-  } else {
-    showPopup("🤝 Fair take");
-  }
-
-  setTimeout(loadTake, 500);
+  setTimeout(() => loadTake("down"), 300);
 }
 
-// TAP TO SKIP
-document.body.addEventListener("click", (e) => {
-  if (e.target.tagName !== "BUTTON") {
-    loadTake();
+// SWIPE DETECTION
+document.addEventListener("touchstart", (e) => {
+  startY = e.touches[0].clientY;
+});
+
+document.addEventListener("touchend", (e) => {
+  endY = e.changedTouches[0].clientY;
+
+  if (startY - endY > 50) {
+    loadTake("down"); // swipe up
+  } else if (endY - startY > 50) {
+    loadTake("up"); // swipe down
   }
 });
 
