@@ -54,3 +54,4 @@ function showReaction(percent, type) {
 
   setTimeout(() => msg.remove(), 1200);
 }
+function vote(type) {    
