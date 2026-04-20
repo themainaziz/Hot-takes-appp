@@ -8,22 +8,31 @@
 </head>
 <body>
 
-  <div class="card">
-    <h4 id="category">FOOTBALL</h4>
+  <div class="app">
 
-    <h1 id="take">Messi is better than Ronaldo</h1>
-
-    <div class="bar">
-      <div id="agreeBar"></div>
+    <div class="top-bar">
+      <h2>🔥 Hot Takes</h2>
+      <span id="streak">🔥 0</span>
     </div>
 
-    <p id="percent">50% Agree</p>
+    <div class="card" id="card">
+      <h4 id="category">HOT TAKE</h4>
+      <h1 id="take">Loading...</h1>
 
-    <button onclick="vote('agree')">AGREE</button>
-    <button onclick="vote('disagree')">DISAGREE</button>
+      <div class="bar">
+        <div id="agreeBar"></div>
+      </div>
+
+      <p id="percent">50% Agree</p>
+
+      <div class="buttons">
+        <button class="agree" onclick="vote('agree')">AGREE</button>
+        <button class="disagree" onclick="vote('disagree')">DISAGREE</button>
+      </div>
+    </div>
+
   </div>
 
   <script src="script.js"></script>
-
 </body>
 </html>
