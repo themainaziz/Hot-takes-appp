@@ -1,151 +1,135 @@
-const takes = [
-  "Messi is better than Ronaldo",
-  "School is useless",
-  "Most people fake confidence",
-  "iPhone users are in a cult",
-  "Android is better",
-  "Drake is overrated",
-  "People pretend to be busy",
-  "Gym selfies are cringe",
-  "Social media ruins confidence",
-  "Most influencers are useless",
-  "Netflix is boring now",
-  "Waking up early is overrated",
-  "Group projects are torture",
-  "Voice notes are annoying",
-  "People follow trends blindly",
-  "Money > passion",
-  "Nobody reads anymore",
-  "Everyone thinks they’re special",
-  "Arguments online are pointless",
-  "Confidence beats intelligence"
+const questions = [
+  "Being nice gets you used more than respected",
+  "Money matters more than love",
+  "Most people fake their personality",
+  "Social media is ruining your brain",
+  "You trust people too easily",
+  "Hard work doesn't guarantee success",
+  "People care more about image than truth"
 ];
 
-let agree = 50;
-let disagree = 50;
-let currentTake = "";
+let index = 0;
+let isAnimating = false;
 
-let startY = 0;
-let endY = 0;
+let agreeCount = 0;
+let disagreeCount = 0;
+let streak = 0;
 
-// LOAD TAKE
-function loadTake(direction = "down") {
-  const screen = document.getElementById("screen");
+const text = document.getElementById("question");
+const stats = document.getElementById("stats");
+const result = document.getElementById("result");
+const card = document.getElementById("card");
 
-  screen.style.transform = direction === "down"
-    ? "translateY(-100%)"
-    : "translateY(100%)";
+const agreeFeedback = ["Hot take", "Bold", "Interesting", "Valid", "Sharp"];
+const disagreeFeedback = ["Unpopular", "Controversial", "Risky", "Hmm", "Different"];
 
-  screen.style.opacity = "0";
+text.innerText = questions[index];
 
-  setTimeout(() => {
-    currentTake = takes[Math.floor(Math.random() * takes.length)];
-
-    document.getElementById("take").innerText = currentTake;
-    document.getElementById("category").innerText = "HOT TAKE";
-
-    // fake global votes (feels real)
-    agree = Math.floor(Math.random() * 500 + 50);
-    disagree = Math.floor(Math.random() * 500 + 50);
-
-    updateUI();
-
-    screen.style.transform = "translateY(0)";
-    screen.style.opacity = "1";
-  }, 200);
+function updateStats() {
+  stats.innerText = `Agree: ${agreeCount} | Disagree: ${disagreeCount} | Streak: ${streak}`;
 }
 
-// UPDATE UI
-function updateUI() {
-  let total = agree + disagree;
-  let percent = Math.round((agree / total) * 100);
+function getPersonality() {
+  const total = agreeCount + disagreeCount;
+  if (total === 0) return "No data";
 
-  document.getElementById("agreeBar").style.width = percent + "%";
-  document.getElementById("percent").innerText = percent + "% Agree";
+  const ratio = agreeCount / total;
+
+  if (ratio > 0.7) return "Bold Thinker";
+  if (ratio > 0.5) return "Balanced Mind";
+  if (ratio > 0.3) return "Independent";
+  return "Contrarian";
 }
 
-// VOTE
-function vote(type) {
-  if (type === "agree") agree++;
-  else disagree++;
+function nextCard() {
+  index++;
 
-  updateUI();
-
-  let total = agree + disagree;
-  let percent = Math.round((agree / total) * 100);
-
-  // identity trigger (viral psychology)
-  if (percent < 30 || percent > 70) {
-    showPopup("💀 This is controversial");
-  } else {
-    showPopup("🤝 Most people agree");
+  if (index >= questions.length) {
+    text.innerText = `Result: ${getPersonality()}`;
+    result.innerText = "Session complete";
+    card.style.transform = "scale(1.05)";
+    return;
   }
 
-  setTimeout(() => loadTake("down"), 400);
+  text.innerText = questions[index];
+
+  card.style.transition = "none";
+  card.style.transform = "translateX(0) rotate(0deg)";
+  card.style.opacity = "1";
+
+  result.innerText = "";
 }
 
-// POPUP
-function showPopup(text) {
-  const pop = document.createElement("div");
+function handleChoice(choice) {
+  if (isAnimating) return;
+  isAnimating = true;
 
-  pop.innerText = text;
-
-  pop.style.position = "fixed";
-  pop.style.top = "40%";
-  pop.style.left = "50%";
-  pop.style.transform = "translateX(-50%) scale(0.8)";
-  pop.style.background = "rgba(0,0,0,0.9)";
-  pop.style.padding = "14px 20px";
-  pop.style.borderRadius = "14px";
-  pop.style.fontSize = "16px";
-  pop.style.opacity = "0";
-  pop.style.transition = "0.25s ease";
-
-  document.body.appendChild(pop);
-
-  setTimeout(() => {
-    pop.style.opacity = "1";
-    pop.style.transform = "translateX(-50%) scale(1)";
-  }, 10);
-
-  setTimeout(() => {
-    pop.style.opacity = "0";
-  }, 900);
-
-  setTimeout(() => pop.remove(), 1200);
-}
-
-// 🔥 SHARE FUNCTION (THIS IS THE VIRAL PART)
-function shareTake() {
-  let total = agree + disagree;
-  let percent = Math.round((agree / total) * 100);
-
-  const message =
-    `I got ${percent}% agree on this take:\n\n"${currentTake}"\n\nDo you agree or disagree?`;
-
-  if (navigator.share) {
-    navigator.share({
-      title: "Hot Takes",
-      text: message,
-      url: window.location.href
-    });
+  if (choice === "agree") {
+    agreeCount++;
+    streak++;
   } else {
-    navigator.clipboard.writeText(message);
-    showPopup("📋 Copied. Send it to someone.");
+    disagreeCount++;
+    streak = 0;
   }
+
+  updateStats();
+
+  const move = choice === "agree" ? 400 : -400;
+  const percentage = Math.floor(Math.random() * 60 + 20);
+
+  const feedback =
+    choice === "agree"
+      ? agreeFeedback[Math.floor(Math.random() * agreeFeedback.length)]
+      : disagreeFeedback[Math.floor(Math.random() * disagreeFeedback.length)];
+
+  result.innerText = `${feedback} • ${percentage}%`;
+  result.style.color = choice === "agree" ? "#00c853" : "#d50000";
+
+  animateOut(move);
 }
 
-// SWIPE
-document.addEventListener("touchstart", (e) => {
-  startY = e.touches[0].clientY;
+function animateOut(move) {
+  card.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+  card.style.transform = `translateX(${move}px) rotate(${move/20}deg)`;
+  card.style.opacity = "0";
+
+  setTimeout(() => {
+    nextCard();
+    isAnimating = false;
+  }, 300);
+}
+
+/* swipe support */
+let startX = 0;
+let currentX = 0;
+let isDragging = false;
+
+card.addEventListener("touchstart", (e) => {
+  if (isAnimating) return;
+  startX = e.touches[0].clientX;
+  isDragging = true;
 });
 
-document.addEventListener("touchend", (e) => {
-  endY = e.changedTouches[0].clientY;
+card.addEventListener("touchmove", (e) => {
+  if (!isDragging) return;
 
-  if (startY - endY > 50) loadTake("down");
-  else if (endY - startY > 50) loadTake("up");
+  currentX = e.touches[0].clientX;
+  let diff = currentX - startX;
+
+  card.style.transform = `translateX(${diff}px) rotate(${diff/20}deg)`;
 });
 
-// START
-loadTake();
+card.addEventListener("touchend", () => {
+  if (!isDragging) return;
+
+  let diff = currentX - startX;
+
+  if (diff > 100) handleChoice("agree");
+  else if (diff < -100) handleChoice("disagree");
+  else {
+    card.style.transition = "transform 0.2s";
+    card.style.transform = "translateX(0)";
+  }
+
+  isDragging = false;
+});
