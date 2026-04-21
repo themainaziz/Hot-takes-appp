@@ -1,77 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Opinion App</title>
-
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #1a1a1a, #000);
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
-/* APP CONTAINER */
-.app {
-  width: 320px;
-  text-align: center;
-}
-
-/* STATS */
-#stats {
-  font-size: 14px;
-  opacity: 0.7;
-}
-
-/* CARD */
-.card {
-  background: #111;
-  border-radius: 20px;
-  padding: 40px 20px;
-  margin: 20px 0;
-  font-size: 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-/* RESULT TEXT */
-#result {
-  height: 30px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-/* BUTTONS */
-.buttons button {
-  margin: 10px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.disagree {
-  background: #d50000;
-  color: white;
-}
-
-.agree {
-  background: #00c853;
-  color: white;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Opinion App</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
 <div class="app">
-  <div id="stats">Agree: 0 | Disagree: 0</div>
+  <div id="stats">Agree: 0 | Disagree: 0 | Streak: 0</div>
 
   <div id="card" class="card">
     <p id="question"></p>
@@ -85,77 +23,7 @@ body {
   </div>
 </div>
 
-<script>
-const questions = [
-  "Being nice gets you used more than respected",
-  "Money matters more than love",
-  "Most people fake their personality",
-  "Social media is ruining your brain",
-  "You trust people too easily",
-  "Hard work doesn't guarantee success",
-  "People care more about image than truth"
-];
-
-let index = 0;
-let isAnimating = false;
-let agreeCount = 0;
-let disagreeCount = 0;
-
-const text = document.getElementById("question");
-const stats = document.getElementById("stats");
-const result = document.getElementById("result");
-const card = document.getElementById("card");
-
-text.innerText = questions[index];
-
-function updateStats() {
-  stats.innerText = `Agree: ${agreeCount} | Disagree: ${disagreeCount}`;
-}
-
-function nextCard() {
-  index = (index + 1) % questions.length;
-  text.innerText = questions[index];
-
-  // RESET STATE
-  card.style.transition = "none";
-  card.style.transform = "translateX(0) rotate(0deg)";
-  card.style.opacity = "1";
-
-  result.innerText = "";
-}
-
-function handleChoice(choice) {
-  if (isAnimating) return; // 🔒 prevents freeze
-  isAnimating = true;
-
-  if (choice === "agree") agreeCount++;
-  else disagreeCount++;
-
-  updateStats();
-
-  const move = choice === "agree" ? 400 : -400;
-
-  // fake percentage feedback
-  const percentage = Math.floor(Math.random() * 60 + 20);
-
-  result.innerText =
-    choice === "agree"
-      ? `${percentage}% agree with you`
-      : `${percentage}% disagree with you`;
-
-  result.style.color = choice === "agree" ? "#00c853" : "#d50000";
-
-  // ANIMATION
-  card.style.transition = "transform 0.3s ease, opacity 0.3s ease";
-  card.style.transform = `translateX(${move}px) rotate(${move/20}deg)`;
-  card.style.opacity = "0";
-
-  setTimeout(() => {
-    nextCard();
-    isAnimating = false; // 🔓 unlock
-  }, 300);
-}
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
